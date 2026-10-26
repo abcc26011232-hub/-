@@ -3,145 +3,235 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Roulette – ヨーロピアンルーレット</title>
+<title>Roulette – アメリカンルーレット</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Limelight&family=Hanken+Grotesk:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
-:root{--felt:#0e4636;--felt-d:#093025;--brass:#cba24b;--ivory:#f3ecd6;--red:#a82a30;--black:#17130f;--green:#1f7a4f;--ink:#f3ecd6;--mute:#a9b8ac}
+:root{--felt:#0e4636;--felt-d:#072a20;--brass:#cba24b;--ivory:#f3ecd6;--red:#a82a30;--black:#17130f;--green:#1f7a4f;--ink:#f3ecd6;--mute:#a9b8ac}
 *{box-sizing:border-box}
 html,body{margin:0}
-body{background:radial-gradient(ellipse at 30% 0%,var(--felt) 0%,var(--felt-d) 70%) fixed;color:var(--ink);font-family:"Hanken Grotesk","Hiragino Sans","Yu Gothic",sans-serif;min-height:100vh}
-header{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:18px 24px;border-bottom:1px solid rgba(203,162,75,.4)}
+body{background:radial-gradient(ellipse at 30% 0%,var(--felt) 0%,var(--felt-d) 75%) fixed;color:var(--ink);font-family:"Hanken Grotesk","Hiragino Sans","Yu Gothic",sans-serif;min-height:100vh}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 24px;border-bottom:1px solid rgba(203,162,75,.4)}
 h1{font-family:Limelight,serif;font-weight:400;font-size:2rem;margin:0;color:var(--brass);letter-spacing:.04em}
-.bank{display:flex;gap:20px;align-items:baseline}
-.bank b{font-size:1.5rem;font-variant-numeric:tabular-nums}
-.bank small{color:var(--mute)}
-main{display:grid;grid-template-columns:minmax(300px,520px) 1fr;gap:28px;padding:24px;max-width:1280px;margin:0 auto}
-@media(max-width:960px){main{grid-template-columns:1fr;padding:16px}}
-.left{display:flex;flex-direction:column;align-items:center;gap:14px}
-canvas{width:100%;max-width:520px;aspect-ratio:1;display:block}
-.result{display:flex;align-items:center;gap:14px;min-height:64px;width:100%;max-width:520px}
+.bank{display:flex;gap:10px;font-size:.85rem;color:var(--mute)}
+.bank span{background:rgba(0,0,0,.35);border:1px solid rgba(203,162,75,.5);border-radius:20px;padding:6px 16px}
+.bank b{font-size:1.25rem;color:var(--ivory);font-variant-numeric:tabular-nums;margin-left:6px}
+.flash{animation:fl .9s}@keyframes fl{30%{color:#ffd978;transform:scale(1.25)}}
+main{display:grid;grid-template-columns:minmax(300px,480px) 1fr;gap:28px;padding:22px;max-width:1320px;margin:0 auto}
+@media(max-width:980px){main{grid-template-columns:1fr;padding:14px}}
+.left{display:flex;flex-direction:column;align-items:center;gap:12px;align-self:start;position:sticky;top:12px}
+@media(max-width:980px){.left{position:static}}
+canvas{width:100%;max-width:480px;aspect-ratio:1;display:block;touch-action:none;cursor:grab}canvas:active{cursor:grabbing}
+.hint3d{margin:-6px 0 0;color:var(--mute);font-size:.78rem}
+.result{display:flex;align-items:center;gap:14px;min-height:64px;width:100%;max-width:480px}
 .badge{width:60px;height:60px;border-radius:50%;display:grid;place-items:center;font-family:Limelight,serif;font-size:1.7rem;border:3px solid var(--brass);flex:none;background:var(--felt-d)}
 .badge.r{background:var(--red)}.badge.b{background:var(--black)}.badge.g{background:var(--green)}
-#msg{font-size:1.05rem;line-height:1.4}
-#msg.win{color:#ffd978}
-.hist{display:flex;gap:6px;flex-wrap:wrap;width:100%;max-width:520px;min-height:30px}
+#msg{font-size:1.05rem;line-height:1.45}#msg.win{color:#ffd978}
+.hist{display:flex;gap:6px;flex-wrap:wrap;width:100%;max-width:480px;min-height:30px}
 .hist span{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:.8rem;font-weight:600;border:1px solid rgba(243,236,214,.5)}
 .hist .r,.cell.r{background:var(--red)}.hist .b,.cell.b{background:var(--black)}.hist .g,.cell.g{background:var(--green)}
 .right{min-width:0}
+.steps{display:flex;flex-wrap:wrap;gap:6px 22px;margin:0 0 14px;padding:0;list-style:none;counter-reset:s;color:var(--mute);font-size:.9rem}
+.steps li::before{counter-increment:s;content:counter(s);display:inline-grid;place-items:center;width:22px;height:22px;margin-right:8px;border-radius:50%;background:var(--brass);color:#1a1209;font-weight:800;font-size:.8rem}
 .tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
-.chips{display:flex;gap:8px}
-.chipbtn{width:52px;height:52px;border-radius:50%;border:3px dashed var(--ivory);background:var(--c);color:#fff;font:800 .85rem "Hanken Grotesk",sans-serif;cursor:pointer;box-shadow:0 0 0 3px var(--c)}
-.chipbtn[aria-pressed=true]{outline:3px solid var(--brass);outline-offset:4px}
-button.act{background:transparent;color:var(--ink);border:1px solid var(--brass);border-radius:6px;padding:10px 16px;font:600 .95rem "Hanken Grotesk","Hiragino Sans",sans-serif;cursor:pointer}
+.chips{display:flex;gap:10px;padding-right:6px}
+.chipbtn{width:54px;height:54px;border-radius:50%;border:0;color:#fff;font:800 .9rem "Hanken Grotesk",sans-serif;cursor:pointer;position:relative;background:repeating-conic-gradient(var(--ivory) 0 15deg,var(--c) 15deg 30deg);box-shadow:0 3px 6px rgba(0,0,0,.5)}
+.chipbtn span{position:absolute;inset:7px;border-radius:50%;background:var(--c);display:grid;place-items:center;border:1px dashed rgba(255,255,255,.6)}
+.chipbtn[aria-pressed=true]{outline:3px solid var(--brass);outline-offset:4px;transform:translateY(-3px)}
+button.act{background:transparent;color:var(--ink);border:1px solid var(--brass);border-radius:6px;padding:9px 14px;font:600 .9rem "Hanken Grotesk","Hiragino Sans",sans-serif;cursor:pointer}
 button.act:hover:not(:disabled){background:rgba(203,162,75,.18)}
-button.act:disabled{opacity:.4;cursor:not-allowed}
-button.spin{background:var(--brass);color:#1a1209;border-color:var(--brass);font-weight:800;padding:12px 28px;margin-left:auto}
-button.spin:hover:not(:disabled){background:#e0b95f}
+button.act:disabled{opacity:.35;cursor:not-allowed}
+button.act[aria-pressed=true]{background:var(--brass);color:#1a1209}
+button.spin{background:var(--brass);color:#1a1209;font-weight:800;font-size:1.05rem;padding:12px 32px;margin-left:auto}
+button.spin:hover:not(:disabled){background:#e3bc62}
 :focus-visible{outline:3px solid #fff;outline-offset:2px}
-.scroll{overflow-x:auto;padding-bottom:8px}
-.board{display:grid;grid-template-columns:54px repeat(12,minmax(44px,1fr)) 54px;grid-auto-rows:52px;gap:3px;min-width:680px}
-.cell{position:relative;display:grid;place-items:center;border:1px solid rgba(243,236,214,.55);background:transparent;color:var(--ink);font:600 1rem "Hanken Grotesk","Hiragino Sans",sans-serif;cursor:pointer;padding:0;border-radius:3px;user-select:none}
-.cell:hover:not(:disabled){filter:brightness(1.35);border-color:var(--brass)}
-.cell:disabled{cursor:not-allowed}
-.cell.hit{box-shadow:0 0 0 3px var(--brass),0 0 18px var(--brass);z-index:2}
-.cell.out{font-size:.92rem}
-.stake{position:absolute;min-width:30px;height:30px;padding:0 4px;border-radius:15px;background:var(--ivory);color:#1a1209;border:3px dashed #8a6a1f;font:800 .75rem "Hanken Grotesk",sans-serif;display:grid;place-items:center;pointer-events:none;box-shadow:0 2px 4px rgba(0,0,0,.5)}
-.help{color:var(--mute);font-size:.85rem;margin-top:12px;line-height:1.6}
+.rail{background:linear-gradient(#4b2e17,#2b190b);padding:14px;border-radius:18px;box-shadow:0 10px 26px rgba(0,0,0,.5),inset 0 0 0 1px rgba(203,162,75,.5)}
+.scroll{overflow-x:auto;border-radius:8px;background:repeating-linear-gradient(45deg,rgba(255,255,255,.015) 0 2px,transparent 2px 4px),var(--felt);box-shadow:inset 0 0 0 2px var(--brass),inset 0 0 30px rgba(0,0,0,.45);padding:12px}
+.tbl{--cw:52px;--ch:56px;position:relative;width:calc(var(--cw)*14);height:calc(var(--ch)*5);margin:0 auto}
+@media(max-width:700px){.tbl{--cw:46px;--ch:52px}}
+.cell{position:absolute;display:grid;place-items:center;border:1px solid rgba(243,236,214,.6);background:transparent;color:var(--ink);font:600 1rem "Hanken Grotesk","Hiragino Sans",sans-serif;cursor:pointer;padding:0;user-select:none}
+.cell.out{font-size:.9rem}
+.cell:hover,.lit{filter:brightness(1.5);box-shadow:inset 0 0 0 2px var(--brass)}
+.cell.hit{box-shadow:inset 0 0 0 3px #ffd978,0 0 20px #ffd978;z-index:2;filter:brightness(1.3)}
+.hs{position:absolute;width:22px;height:22px;border-radius:50%;border:0;padding:0;background:transparent;cursor:pointer;z-index:3}
+.hs::after{content:"";position:absolute;left:8px;top:8px;width:6px;height:6px;border-radius:50%;background:var(--brass);opacity:.4}
+.hs:hover::after,.hs:focus-visible::after{opacity:1;inset:3px;width:auto;height:auto;background:rgba(255,217,120,.35);border:2px solid #ffd978}
+.tbl.erasing .cell,.tbl.erasing .hs{cursor:not-allowed}
+.stake{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:4;min-width:30px;height:30px;padding:0 3px;border-radius:15px;background:var(--c);color:#fff;border:3px dashed rgba(255,255,255,.85);font:800 .72rem "Hanken Grotesk",sans-serif;display:grid;place-items:center;pointer-events:none;box-shadow:0 2px 5px rgba(0,0,0,.6)}
+#info{margin:12px 2px 0;min-height:1.5em;color:var(--brass);font-size:.95rem}
+.calls{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.help{color:var(--mute);font-size:.82rem;margin-top:14px;line-height:1.7}
+[hidden]{display:none!important}
+.vs{display:flex;flex-wrap:wrap;align-items:center;gap:8px 24px;padding:10px 16px;margin-bottom:14px;border:1px solid var(--brass);border-radius:10px;background:rgba(0,0,0,.3)}
+#vsi{display:flex;flex-wrap:wrap;gap:6px 24px;align-items:baseline}
+.vs b{font-size:1.15rem;font-variant-numeric:tabular-nums;margin:0 2px}.vs small{color:var(--mute)}
+.modal{position:fixed;inset:0;z-index:20;background:rgba(3,15,11,.82);display:grid;place-items:center;padding:16px}
+.card{width:min(440px,100%);background:linear-gradient(#4b2e17,#2b190b);border:2px solid var(--brass);border-radius:16px;padding:22px;box-shadow:0 20px 50px rgba(0,0,0,.6)}
+.card h2{font-family:Limelight,serif;font-weight:400;color:var(--brass);margin:0 0 10px;font-size:1.5rem}
+.card p{margin:8px 0;line-height:1.6}.card .sm{font-size:.82rem;color:var(--mute)}
+.card .big{display:block;width:100%;margin:10px 0;padding:14px;font-size:1rem}
+.join{display:flex;gap:8px;margin:10px 0}
+.join input{flex:1;min-width:0;padding:10px;border-radius:6px;border:1px solid var(--brass);background:rgba(0,0,0,.35);color:var(--ink);font:800 1.1rem "Hanken Grotesk",sans-serif;letter-spacing:.2em;text-transform:uppercase}
+.code{font:400 2.4rem Limelight,serif;color:#ffd978;letter-spacing:.25em;text-align:center;margin:8px 0}
+.zoombox{display:flex;align-items:center;gap:16px;width:100%;max-width:480px;padding:10px;border:1px solid var(--brass);border-radius:14px;background:rgba(0,0,0,.35)}
+.zoombox canvas{width:150px;height:150px;border-radius:10px;border:2px solid var(--brass);flex:none;touch-action:auto;cursor:default}
+.zt{color:var(--mute);font-size:.85rem;margin-bottom:4px}
+#zlab{font:400 2.8rem/1.1 Limelight,serif;display:flex;align-items:center}
+#zlab small{font:600 1rem "Hanken Grotesk","Hiragino Sans",sans-serif;color:var(--mute);margin-left:12px}
+.dot{display:inline-block;width:.55em;height:.55em;border-radius:50%;margin-right:.3em;border:2px solid var(--brass)}
+.dot.r{background:var(--red)}.dot.b{background:var(--black)}.dot.g{background:var(--green)}
+.pop{animation:pop .8s}@keyframes pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.05);box-shadow:0 0 30px #ffd978}100%{transform:scale(1)}}
+.pick{display:flex;gap:10px}.pick .big{flex:1}
+.vs .cur b{color:#ffd978}
 </style>
 </head>
 <body>
 <header>
   <h1>Roulette</h1>
-  <div class="bank"><span><small>残高</small> <b id="bal">1000</b></span><span><small>ベット合計</small> <b id="tot">0</b></span></div>
+  <div class="bank"><span>残高<b id="bal">1000</b></span><span>ベット<b id="tot">0</b></span><button class="act" id="modeBtn">モード</button></div>
 </header>
 <main>
   <section class="left">
-    <canvas id="wheel" width="1040" height="1040" aria-label="ルーレットホイール"></canvas>
+    <canvas id="wheel" width="960" height="960" aria-label="ルーレットホイール"></canvas>
+    <p class="hint3d">ドラッグで視点を回転 / ダブルクリックでリセット</p>
+    <div class="zoombox" id="zoombox" hidden><canvas id="zoom" width="360" height="360" aria-label="玉が入った目の拡大表示"></canvas><div><div class="zt">玉が入った目(拡大)</div><div id="zlab"></div></div></div>
     <div class="result"><div class="badge" id="badge">–</div><div id="msg" aria-live="polite">チップを選んで、盤面をタップしてベットしてください。</div></div>
     <div class="hist" id="hist"></div>
   </section>
   <section class="right">
+    <div class="vs" id="vs" hidden><div id="vsi"></div><button class="act" id="again" hidden>もう一度</button></div>
+    <ol class="steps"><li>チップを選ぶ</li><li>盤面をタップ</li><li>スタート</li></ol>
     <div class="tools">
       <div class="chips" id="chips"></div>
       <button class="act" id="undo">1つ戻す</button>
+      <button class="act" id="erase" aria-pressed="false">消しゴム</button>
       <button class="act" id="clear">全部クリア</button>
-      <button class="act spin" id="spin" disabled>スピン</button>
+      <button class="act" id="rebet">前回と同じ</button>
+      <button class="act" id="dbl">2倍</button>
+      <button class="act spin" id="spin">スタート</button>
     </div>
-    <div class="scroll"><div class="board" id="board"></div></div>
-    <p class="help">ヨーロピアン方式（0 が1つ、全37ポケット）。ストレート（1点）は35倍、ダース・コラムは3倍、赤黒・偶奇・前半後半は2倍で払い戻されます。PC ではセルを右クリックで、選択中のチップ分だけ減らせます。遊びのためのゲームで、実際のお金は使いません。</p>
+    <div class="rail"><div class="scroll"><div class="tbl" id="tbl"></div></div></div>
+    <div id="info">盤面にカーソルを乗せると、当たる番号と配当が表示されます。</div>
+    <p class="help">アメリカンスタイル(0と00があり、全38ポケット)です。数字のマスはストレート(35倍)。数字の境目の小さな点を押すと、スプリット(2点・17倍)、ストリート(3点・11倍)、コーナー(4点・8倍)、シックスライン(6点・5倍)に賭けられます。0・00まわりの点では、トリオ(11倍)と、0・00・1・2・3をまとめて賭けるファイブナンバー(6倍)も選べます。コラム・ダースは3倍、赤黒・偶奇・前後半は2倍で、0と00はすべてハズレです。ベットしなくても「スタート」でホイールを回せます。ベットを消すには「消しゴム」をオンにして押すか、PC では右クリックします。遊びのためのゲームで、実際のお金は使いません。</p>
   </section>
 </main>
+<div class="modal" id="menu" hidden><div class="card"><h2>Roulette</h2><div id="mbody"></div></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script>
-const ORDER=[0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
+const ORDER=[0,28,9,26,30,11,7,20,32,17,5,22,34,15,3,24,36,13,1,37,27,10,25,29,12,8,19,31,18,6,21,33,16,4,23,35,14,2];
+const lab=n=>n===37?'00':String(n);
 const REDS=new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
-const cc=n=>n===0?'g':REDS.has(n)?'r':'b';
+const cc=n=>n===0||n===37?'g':REDS.has(n)?'r':'b';
 const COLORS={g:'#1f7a4f',r:'#a82a30',b:'#17130f'};
 const RULES={
-  red:{l:'赤',t:n=>REDS.has(n),m:1},black:{l:'黒',t:n=>n>0&&!REDS.has(n),m:1},
-  odd:{l:'奇数',t:n=>n>0&&n%2===1,m:1},even:{l:'偶数',t:n=>n>0&&n%2===0,m:1},
-  low:{l:'1–18',t:n=>n>=1&&n<=18,m:1},high:{l:'19–36',t:n=>n>=19,m:1},
-  d1:{l:'1st 12',t:n=>n>=1&&n<=12,m:2},d2:{l:'2nd 12',t:n=>n>=13&&n<=24,m:2},d3:{l:'3rd 12',t:n=>n>=25,m:2},
-  c1:{l:'2:1',t:n=>n>0&&n%3===1,m:2},c2:{l:'2:1',t:n=>n>0&&n%3===2,m:2},c3:{l:'2:1',t:n=>n>0&&n%3===0,m:2}
+  red:{l:'赤',t:n=>REDS.has(n),m:1},black:{l:'黒',t:n=>n>0&&n<37&&!REDS.has(n),m:1},
+  odd:{l:'奇数',t:n=>n>0&&n<37&&n%2===1,m:1},even:{l:'偶数',t:n=>n>0&&n<37&&n%2===0,m:1},
+  low:{l:'1–18',t:n=>n>=1&&n<=18,m:1},high:{l:'19–36',t:n=>n>=19&&n<=36,m:1},
+  d1:{l:'1st 12',t:n=>n>=1&&n<=12,m:2},d2:{l:'2nd 12',t:n=>n>=13&&n<=24,m:2},d3:{l:'3rd 12',t:n=>n>=25&&n<=36,m:2},
+  c1:{l:'2:1',n:'コラム(下段)',t:n=>n>0&&n<37&&n%3===1,m:2},c2:{l:'2:1',n:'コラム(中段)',t:n=>n>0&&n<37&&n%3===2,m:2},c3:{l:'2:1',n:'コラム(上段)',t:n=>n>0&&n<37&&n%3===0,m:2}
 };
-const ruleOf=k=>k.startsWith('n:')?{t:n=>n===+k.slice(2),m:35}:RULES[k];
-const CHIPS=[[10,'#2f5d9e'],[50,'#7a3b8f'],[100,'#1a1a1a'],[500,'#b0561f']];
+const MULT={1:35,2:17,3:11,4:8,5:6,6:5},NAMES={1:'ストレート',2:'スプリット',3:'ストリート',4:'コーナー',5:'ファイブナンバー',6:'シックスライン'};
+const numsOf=k=>k.slice(2).split('-').map(Number);
+function ruleOf(k){if(k[0]==='x'){const s=new Set(numsOf(k));return{t:n=>s.has(n),m:MULT[s.size]}}return RULES[k]}
+const CH=[[10,'#2f5d9e'],[50,'#7a3b8f'],[100,'#2b2b2b'],[500,'#b0561f']];
+const colorFor=a=>a>=500?CH[3][1]:a>=100?CH[2][1]:a>=50?CH[1][1]:CH[0][1];
 const $=id=>document.getElementById(id);
-let balance=1000,chip=10,bets={},stack=[],spinning=false,resultIdx=null,hist=[];
+let mode='solo',vs=null,duo=null,peer=null,conn=null,isHost=false,balance=1000,chip=10,bets={},stack=[],last=null,spinning=false,eraser=false,resultIdx=null,hist=[];
 try{const s=+localStorage.getItem('roulette-balance');if(s>0)balance=s}catch(e){}
-function save(){try{localStorage.setItem('roulette-balance',balance)}catch(e){}}
+const save=()=>{if(mode!=='solo')return;try{localStorage.setItem('roulette-balance',balance)}catch(e){}};
 const total=()=>Object.values(bets).reduce((a,b)=>a+b,0);
-
-// ---- board ----
-const board=$('board'),cells={};
-function mk(key,label,cls,col,row){
-  const b=document.createElement('button');b.className='cell '+cls;b.textContent=label;b.style.gridColumn=col;b.style.gridRow=row;b.dataset.key=key;
-  b.addEventListener('click',()=>place(key));
-  b.addEventListener('contextmenu',e=>{e.preventDefault();remove(key)});
-  board.appendChild(b);cells[key]=b;
+const fmt=a=>a>=1000?(a/1000)+'k':a;
+ 
+// ---- table ----
+const tbl=$('tbl'),cells={},numEl={};
+function reg(el,key,label){
+  cells[key]=el;el.onclick=()=>act(key);el.oncontextmenu=e=>{e.preventDefault();erase(key)};
+  el.onpointerenter=el.onfocus=()=>info(key,label);el.onpointerleave=el.onblur=clearInfo;tbl.appendChild(el);
 }
-mk('n:0','0','g','1','1 / 4');
-for(let n=1;n<=36;n++)mk('n:'+n,n,cc(n),String(Math.ceil(n/3)+1),String(n%3===0?1:n%3===2?2:3));
-mk('c3','2:1','out','14','1');mk('c2','2:1','out','14','2');mk('c1','2:1','out','14','3');
-[['d1','2 / 6'],['d2','6 / 10'],['d3','10 / 14']].forEach(([k,c])=>mk(k,RULES[k].l,'out',c,'4'));
-[['low','2 / 4','out'],['even','4 / 6','out'],['red','6 / 8','out r'],['black','8 / 10','out b'],['odd','10 / 12','out'],['high','12 / 14','out']]
-  .forEach(([k,c,cl])=>mk(k,RULES[k].l,cl,c,'5'));
-CHIPS.forEach(([v,c])=>{const b=document.createElement('button');b.className='chipbtn';b.style.setProperty('--c',c);b.textContent=v;b.setAttribute('aria-pressed',v===chip);b.setAttribute('aria-label',v+'のチップ');
+function mkCell(key,label,cls,x,y,w,h,name){
+  const b=document.createElement('button');b.className='cell '+cls;b.textContent=label;
+  b.style.cssText=`left:calc(var(--cw)*${x});top:calc(var(--ch)*${y});width:calc(var(--cw)*${w});height:calc(var(--ch)*${h})`;
+  b.setAttribute('aria-label',name||label);reg(b,key,name||label);return b;
+}
+const N=(c,r)=>3*c-r+1;
+numEl[37]=mkCell('x:37','00','g',0,0,1,1.5,'ストレート 00');
+numEl[0]=mkCell('x:0','0','g',0,1.5,1,1.5,'ストレート 0');
+for(let c=1;c<=12;c++)for(let r=1;r<=3;r++){const n=N(c,r);numEl[n]=mkCell('x:'+n,n,cc(n),c,r-1,1,1,'ストレート '+n)}
+[['c3',0],['c2',1],['c1',2]].forEach(([k,r])=>mkCell(k,'2:1','out',13,r,1,1,RULES[k].n));
+['d1','d2','d3'].forEach((k,i)=>mkCell(k,RULES[k].l,'out',1+4*i,3,4,1,'ダース '+RULES[k].l));
+[['low',''],['even',''],['red','r'],['black','b'],['odd',''],['high','']].forEach(([k,cl],i)=>mkCell(k,RULES[k].l,'out '+cl,1+2*i,4,2,1,RULES[k].l));
+function hot(nums,x,y){
+  nums.sort((a,b)=>a-b);const key='x:'+nums.join('-');
+  const zz=nums.includes(0)||nums.includes(37),nm=nums.length===3&&zz?'トリオ':NAMES[nums.length];
+  const b=document.createElement('button');b.className='hs';b.setAttribute('aria-label',nm+' '+nums.map(lab).join('・'));
+  b.style.left=`calc(var(--cw)*${x} - 11px)`;b.style.top=`calc(var(--ch)*${y} - 11px)`;reg(b,key,nm+' '+nums.map(lab).join('・'));
+}
+for(let c=1;c<=12;c++){
+  for(let r=1;r<=3;r++)if(c<12)hot([N(c,r),N(c+1,r)],c+1,r-.5);
+  for(let r=1;r<=2;r++){hot([N(c,r),N(c,r+1)],c+.5,r);if(c<12)hot([N(c,r),N(c+1,r),N(c,r+1),N(c+1,r+1)],c+1,r)}
+  hot([3*c-2,3*c-1,3*c],c+.5,3);if(c<12)hot([3*c-2,3*c-1,3*c,3*c+1,3*c+2,3*c+3],c+1,3);
+}
+[[[37,3],1,.5],[[37,2,3],1,1],[[0,37,2],1,1.5],[[0,1,2],1,2],[[0,1],1,2.5],[[0,1,2,3,37],1,3],[[0,37],.5,1.5]].forEach(([n,x,y])=>hot(n,x,y));
+ 
+CH.forEach(([v,c])=>{const b=document.createElement('button');b.className='chipbtn';b.style.setProperty('--c',c);b.innerHTML='<span>'+v+'</span>';b.setAttribute('aria-pressed',v===chip);b.setAttribute('aria-label',v+'のチップ');
   b.onclick=()=>{chip=v;[...$('chips').children].forEach(x=>x.setAttribute('aria-pressed',x===b))};$('chips').appendChild(b)});
-
+ 
+const lit=nums=>{Object.values(numEl).forEach(e=>e.classList.remove('lit'));nums.forEach(n=>numEl[n].classList.add('lit'))};
+function info(key,label){
+  const r=ruleOf(key);lit([...Array(38).keys()].filter(r.t));
+  $('info').textContent=`${label} — ${r.m}倍(${chip}を賭けて当たれば +${chip*r.m})`;
+}
+function clearInfo(){lit([]);$('info').textContent='盤面にカーソルを乗せると、当たる番号と配当が表示されます。'}
+ 
 function refresh(){
   $('bal').textContent=balance.toLocaleString();$('tot').textContent=total().toLocaleString();
-  Object.entries(cells).forEach(([k,el])=>{
+  for(const[k,el]of Object.entries(cells)){
     el.querySelector('.stake')?.remove();el.disabled=spinning;
-    if(bets[k]){const s=document.createElement('span');s.className='stake';s.textContent=bets[k];el.appendChild(s)}
-  });
-  $('spin').disabled=spinning||total()===0;$('undo').disabled=spinning||!stack.length;$('clear').disabled=spinning||!total();
+    if(bets[k]){const s=document.createElement('span');s.className='stake';s.style.setProperty('--c',colorFor(bets[k]));s.textContent=fmt(bets[k]);el.appendChild(s)}
+  }
+    const t=total();
+  $('spin').disabled=spinning;$('undo').disabled=spinning||!stack.length;$('clear').disabled=spinning||!t;
+  $('erase').disabled=spinning;$('rebet').disabled=spinning||t>0||!last;$('dbl').disabled=spinning||!t||balance<t;
+  $('spin').textContent=vs?'準備OK':duo?(duo.cur<duo.n-1?'プレイヤー'+(duo.cur+2)+'へ':'スタート'):'スタート';
+  if(vs){$('spin').disabled=spinning;vsPanel();sendSt()}
+  if(duo){$('spin').disabled=spinning;duoPanel()}
 }
+function addBet(k,v){balance-=v;bets[k]=(bets[k]||0)+v;stack.push([k,v])}
+function act(k){eraser?erase(k):place(k)}
 function place(k){
   if(spinning)return;
-  if(balance<chip){setMsg(balance<=0?'残高がありません。「リセット」で1000に戻せます。':'残高が足りません。小さいチップを選んでください。');return}
-  balance-=chip;bets[k]=(bets[k]||0)+chip;stack.push([k,chip]);save();refresh();
+  if(balance<chip){setMsg(balance<=0?'残高がありません。':'残高が足りません。小さいチップを選んでください。');return}
+  addBet(k,chip);save();refresh();
 }
-function remove(k){
+function erase(k){
   if(spinning||!bets[k])return;
-  const v=Math.min(chip,bets[k]);bets[k]-=v;if(!bets[k])delete bets[k];balance+=v;stack=stack.filter(()=>true);
-  for(let i=stack.length-1,left=v;i>=0&&left>0;i--){if(stack[i][0]===k){const d=Math.min(left,stack[i][1]);stack[i][1]-=d;left-=d;if(!stack[i][1])stack.splice(i,1)}}
-  save();refresh();
+  balance+=bets[k];delete bets[k];stack=stack.filter(s=>s[0]!==k);save();refresh();
 }
 $('undo').onclick=()=>{if(spinning||!stack.length)return;const[k,v]=stack.pop();bets[k]-=v;if(!bets[k])delete bets[k];balance+=v;save();refresh()};
 $('clear').onclick=()=>{if(spinning)return;balance+=total();bets={};stack=[];save();refresh()};
+$('erase').onclick=()=>{eraser=!eraser;$('erase').setAttribute('aria-pressed',eraser);tbl.classList.toggle('erasing',eraser)};
+$('rebet').onclick=()=>{
+  if(!last)return;const need=Object.values(last).reduce((a,b)=>a+b,0);
+  if(balance<need){setMsg('前回と同じベットには残高が足りません。');return}
+  for(const[k,v]of Object.entries(last))addBet(k,v);save();refresh();
+};
+$('dbl').onclick=()=>{const t=total();if(balance<t)return;for(const[k,v]of Object.entries({...bets}))addBet(k,v);save();refresh()};
 function setMsg(t,win){$('msg').textContent=t;$('msg').className=win?'win':''}
-
+ 
 // ---- wheel ----
-const cv=$('wheel'),g=cv.getContext('2d'),S=cv.width,C=S/2,K=S/520;
-const STEP=Math.PI*2/37,pocketAngle=i=>i*STEP-Math.PI/2;
+let cv=$('wheel'),g=null,K=1;
+const STEP=Math.PI*2/38,pocketAngle=i=>i*STEP-Math.PI/2;
 let wa=0,ba=0,br=216;
-function wheelDraw(){
-  g.setTransform(K,0,0,K,0,0);g.clearRect(0,0,520,520);g.save();g.translate(260,260);
-  let gr=g.createRadialGradient(0,0,200,0,0,258);gr.addColorStop(0,'#5a3a1e');gr.addColorStop(.7,'#3b2412');gr.addColorStop(1,'#241508');
+function wheelDraw(g,K,wa,ball,view,bpos){
+  g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,g.canvas.width,g.canvas.height);
+  if(view)g.setTransform(view.s,0,0,view.s,view.tx,view.ty);else g.setTransform(K,0,0,K,0,0);
+  g.save();g.translate(260,260);
+  let gr=g.createRadialGradient(0,0,200,0,0,258);gr.addColorStop(0,'#6a4524');gr.addColorStop(.7,'#3b2412');gr.addColorStop(1,'#1d1106');
   g.fillStyle=gr;g.beginPath();g.arc(0,0,258,0,7);g.fill();
-  g.strokeStyle='#cba24b';g.lineWidth=3;g.beginPath();g.arc(0,0,252,0,7);g.stroke();
-  gr=g.createRadialGradient(0,0,196,0,0,238);gr.addColorStop(0,'#2a2018');gr.addColorStop(1,'#4a3c2c');
+  gr=g.createLinearGradient(-250,-250,250,250);gr.addColorStop(0,'#f1d98f');gr.addColorStop(.5,'#9a7524');gr.addColorStop(1,'#e8cf84');
+  g.strokeStyle=gr;g.lineWidth=5;g.beginPath();g.arc(0,0,251,0,7);g.stroke();
+  gr=g.createRadialGradient(0,0,196,0,0,238);gr.addColorStop(0,'#2a2018');gr.addColorStop(1,'#5a4a36');
   g.fillStyle=gr;g.beginPath();g.arc(0,0,238,0,7);g.fill();
   g.save();g.rotate(wa);
   ORDER.forEach((n,i)=>{
@@ -149,17 +239,84 @@ function wheelDraw(){
     g.beginPath();g.arc(0,0,198,a-h,a+h);g.arc(0,0,148,a+h,a-h,true);g.closePath();
     g.fillStyle=COLORS[cc(n)];g.fill();g.strokeStyle='#cba24b';g.lineWidth=1.5;g.stroke();
     g.save();g.rotate(a);g.translate(184,0);g.rotate(Math.PI/2);
-    g.fillStyle='#f3ecd6';g.font='600 13px "Hanken Grotesk",sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(n,0,0);g.restore();
+    g.fillStyle='#f3ecd6';g.font='600 13px "Hanken Grotesk",sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(lab(n),0,0);g.restore();
   });
-  gr=g.createRadialGradient(-20,-20,5,0,0,148);gr.addColorStop(0,'#e7cd86');gr.addColorStop(1,'#8a6a1f');
+  gr=g.createRadialGradient(-30,-30,5,0,0,148);gr.addColorStop(0,'#f0dc98');gr.addColorStop(1,'#7d5f1a');
   g.fillStyle=gr;g.beginPath();g.arc(0,0,146,0,7);g.fill();
   g.strokeStyle='rgba(60,40,10,.55)';g.lineWidth=5;
   for(let i=0;i<4;i++){g.save();g.rotate(i*Math.PI/2+Math.PI/4);g.beginPath();g.moveTo(34,0);g.lineTo(138,0);g.stroke();g.restore()}
   g.fillStyle='#2a1a0a';g.beginPath();g.arc(0,0,30,0,7);g.fill();g.fillStyle='#cba24b';g.beginPath();g.arc(0,0,16,0,7);g.fill();
   g.restore();
-  g.fillStyle='#fff';g.shadowColor='rgba(0,0,0,.6)';g.shadowBlur=5;g.shadowOffsetY=2;
-  g.beginPath();g.arc(Math.cos(ba)*br,Math.sin(ba)*br,7.5,0,7);g.fill();
+  if(ball){gr=g.createRadialGradient(-90,-110,10,0,0,250);gr.addColorStop(0,'rgba(255,255,255,.16)');gr.addColorStop(.5,'rgba(255,255,255,0)');
+  g.fillStyle=gr;g.beginPath();g.arc(0,0,238,0,7);g.fill();
+  g.shadowColor='rgba(0,0,0,.6)';g.shadowBlur=5;g.shadowOffsetY=2;
+  const bA=bpos?bpos.a:ba,bR=bpos?bpos.r:br,bx=Math.cos(bA)*bR,by=Math.sin(bA)*bR;
+  gr=g.createRadialGradient(bx-2,by-2,1,bx,by,8);gr.addColorStop(0,'#fff');gr.addColorStop(1,'#bdb8aa');
+  g.fillStyle=gr;g.beginPath();g.arc(bx,by,7.5,0,7);g.fill();}
   g.restore();
+}
+ 
+// ---- 3D (three.js) ----
+const prof=r=>r<30?60-r/3:r<146?50*Math.pow((146-r)/116,1.6):r<198?0:r<238?(r-198)/40*28:r<248?28+(r-238)*1.6:44-(r-248)*.6;
+let render;
+(function(){
+  let ok=false;
+  if(typeof THREE!=='undefined'){try{
+    const T=THREE,c0=$('wheel');
+    const rd=new T.WebGLRenderer({canvas:c0,antialias:true,alpha:true});
+    rd.setClearColor(0,0);rd.outputEncoding=T.sRGBEncoding;rd.shadowMap.enabled=true;rd.setPixelRatio(Math.min(devicePixelRatio||1,2));
+    const fit=()=>{const w=c0.clientWidth||480;rd.setSize(w,w,false)};fit();addEventListener('resize',fit);
+    const sc=new T.Scene(),cam=new T.PerspectiveCamera(36,1,.1,50);
+    // texture: the flat 2D wheel drawing
+    const tc=document.createElement('canvas');tc.width=tc.height=2048;const tg=tc.getContext('2d');
+    const paint=()=>wheelDraw(tg,2048/520,0,false);paint();
+    const tex=new T.CanvasTexture(tc);tex.encoding=T.sRGBEncoding;tex.anisotropy=rd.capabilities.getMaxAnisotropy();
+    if(document.fonts)document.fonts.ready.then(()=>{paint();tex.needsUpdate=true});
+    // wheel surface: height profile + planar UV
+    const rs=[];for(let r=0;r<=258;r+=2)rs.push(r);
+    const seg=160,pos=[],uv=[],idx=[];
+    rs.forEach(r=>{for(let i=0;i<=seg;i++){const a=i/seg*Math.PI*2,x=Math.cos(a)*r,z=Math.sin(a)*r;pos.push(x/100,prof(r)/100,z/100);uv.push(.5+x/520,.5-z/520)}});
+    for(let i=0;i<rs.length-1;i++)for(let j=0;j<seg;j++){const a=i*(seg+1)+j,b=a+seg+1;idx.push(a,a+1,b,a+1,b+1,b)}
+    const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(pos,3));geo.setAttribute('uv',new T.Float32BufferAttribute(uv,2));geo.setIndex(idx);geo.computeVertexNormals();
+    const wm=new T.Mesh(geo,new T.MeshStandardMaterial({map:tex,roughness:.45,metalness:.2,side:T.DoubleSide}));wm.receiveShadow=true;sc.add(wm);
+    const gold=new T.MeshStandardMaterial({color:0xcba24b,metalness:.6,roughness:.3}),wood=new T.MeshStandardMaterial({color:0x4a2d16,roughness:.55,side:T.DoubleSide});
+    const cone=new T.Mesh(new T.ConeGeometry(.2,.55,32),gold);cone.position.y=.82;wm.add(cone);
+    const knob=new T.Mesh(new T.SphereGeometry(.09,24,12),gold);knob.position.y=1.12;wm.add(knob);
+    const ring=new T.Mesh(new T.RingGeometry(2.58,3.5,96),wood);ring.rotation.x=-Math.PI/2;ring.position.y=.38;ring.receiveShadow=true;sc.add(ring);
+    const body=new T.Mesh(new T.CylinderGeometry(3.5,3.3,1.4,96,1,true),wood);body.position.y=-.32;sc.add(body);
+    const base=new T.Mesh(new T.CircleGeometry(3.3,64),wood);base.rotation.x=Math.PI/2;base.position.y=-1.02;sc.add(base);
+    [[3.5,.05],[2.6,.035]].forEach(([r,t])=>{const m=new T.Mesh(new T.TorusGeometry(r,t,12,96),gold);m.rotation.x=Math.PI/2;m.position.y=.39;sc.add(m)});
+    const ballM=new T.Mesh(new T.SphereGeometry(.11,32,16),new T.MeshStandardMaterial({color:0xffffff,roughness:.12,metalness:.1}));ballM.castShadow=true;sc.add(ballM);
+    // lights
+    sc.add(new T.AmbientLight(0xffffff,.75));
+    const dl=new T.DirectionalLight(0xfff1d6,.85);dl.position.set(3,8,4);dl.castShadow=true;dl.shadow.mapSize.set(1024,1024);
+    Object.assign(dl.shadow.camera,{left:-4,right:4,top:4,bottom:-4,near:1,far:20});dl.shadow.bias=-.002;sc.add(dl);
+    const pl=new T.PointLight(0xffd9a0,.5,20);pl.position.set(-4,5,-3);sc.add(pl);
+    // drag to orbit
+    let az=0,el=.95,dist=9.6,drag=null;
+    const setCam=()=>{cam.position.set(dist*Math.cos(el)*Math.sin(az),dist*Math.sin(el),dist*Math.cos(el)*Math.cos(az));cam.lookAt(0,0,0)};setCam();
+    c0.addEventListener('pointerdown',e=>{drag=[e.clientX,e.clientY];c0.setPointerCapture(e.pointerId)});
+    c0.addEventListener('pointermove',e=>{if(!drag)return;az-=(e.clientX-drag[0])*.008;el=Math.max(.35,Math.min(1.45,el+(e.clientY-drag[1])*.006));drag=[e.clientX,e.clientY];setCam()});
+    ['pointerup','pointercancel'].forEach(t=>c0.addEventListener(t,()=>{drag=null}));
+    c0.addEventListener('dblclick',()=>{az=0;el=.95;setCam()});
+    render=()=>{
+      wm.rotation.y=-wa;
+      ballM.position.set(Math.cos(ba)*br/100,prof(br)/100+.11,Math.sin(ba)*br/100);
+      rd.render(sc,cam);
+    };
+    ok=true;
+  }catch(e){ok=false}}
+  if(!ok){
+    const c2=$('wheel').cloneNode();$('wheel').replaceWith(c2);cv=c2;g=c2.getContext('2d');K=c2.width/520;
+    document.querySelector('.hint3d').remove();
+    render=()=>wheelDraw(g,K,wa,true);
+  }
+})();
+function zoomShow(n){
+  const idx=ORDER.indexOf(n),zg=$('zoom').getContext('2d');
+  wheelDraw(zg,1,-idx*STEP,true,{s:5,tx:180-5*260,ty:180-5*87},{a:-Math.PI/2,r:176});
+  const bx=$('zoombox');bx.hidden=false;bx.classList.remove('pop');void bx.offsetWidth;bx.classList.add('pop');
+  $('zlab').innerHTML=`<span class="dot ${cc(n)}"></span>${lab(n)}<small>${n===0||n===37?'緑':cc(n)==='r'?'赤':'黒'}</small>`;
 }
 const ease3=p=>1-Math.pow(1-p,3),ease2=p=>1-(1-p)*(1-p),eio=p=>p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -170,41 +327,214 @@ function frame(t){
     wa=anim.W0+(anim.W1-anim.W0)*ease2(p);
     ba=anim.B0+(anim.B1-anim.B0)*ease3(p);
     br=p<.7?216:216-40*eio((p-.7)/.3)+Math.sin(p*70)*4*Math.pow(1-p,2);
-    if(p>=1){const done=anim.done;anim=null;br=176;done()}
+    if(p>=1){const d=anim.done;anim=null;br=176;d()}
   }else{
     if(!reduce)wa+=.0018;
     if(resultIdx!==null){ba=wa+pocketAngle(resultIdx);br=176}
   }
-  wheelDraw();requestAnimationFrame(frame);
+  render();requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
-
-function rand37(){const a=new Uint32Array(1);let x;do{crypto.getRandomValues(a);x=a[0]}while(x>=4294967296-4294967296%37);return x%37}
-
+function rand38(){const a=new Uint32Array(1);let x;do{crypto.getRandomValues(a);x=a[0]}while(x>=4294967296-4294967296%38);return x%38}
+ 
 $('spin').onclick=()=>{
-  if(spinning||!total())return;
-  spinning=true;refresh();setMsg('ボールが回っています…');
+  if(mode==='duo'){
+    if(spinning)return;
+    duo.bets[duo.cur]={...bets};duo.bal[duo.cur]=balance;
+    if(duo.cur<duo.n-1){
+      duo.cur++;balance=duo.bal[duo.cur];bets={};stack=[];
+      setMsg(`プレイヤー${duo.cur+1}の番です。ベットして「${duo.cur<duo.n-1?'プレイヤー'+(duo.cur+2)+'へ':'スタート'}」を押してください。`);refresh();
+      showMenu(`<p>プレイヤー${duo.cur+1}に端末を渡してください。</p><button class="act big" data-a="ok">プレイヤー${duo.cur+1}です(OK)</button>`);
+    }else startSpin(rand38(),[Math.random()]);
+    return;
+  }
+  if(mode==='vs'){if(spinning)return;vs.myReady=true;spinning=true;setMsg('相手を待っています…');refresh();if(isHost)tryStart();return}
+  if(spinning)return;startSpin(rand38(),[Math.random()]);
+};
+function startSpin(n,a){
+  spinning=true;last={...bets};refresh();setMsg('ボールが回っています…');
   Object.values(cells).forEach(c=>c.classList.remove('hit'));
-  const n=rand37(),idx=ORDER.indexOf(n);
-  const W0=wa,W1=wa+Math.PI*2*(3+Math.random()*1.5),B0=resultIdx!==null?wa+pocketAngle(resultIdx):ba;
+  const idx=ORDER.indexOf(n);
+  const W0=wa,W1=wa+Math.PI*2*(3+a[0]*1.5),B0=resultIdx!==null?wa+pocketAngle(resultIdx):ba;
   let B1=W1+pocketAngle(idx);while(B1>B0-Math.PI*2*7)B1-=Math.PI*2;
   resultIdx=null;br=216;
   anim={t0:performance.now(),T:reduce?800:6500,W0,W1,B0,B1,done:()=>{resultIdx=idx;settle(n)}};
 };
 function settle(n){
+  if(duo){settleHot(n);return}
   let win=0;for(const[k,v]of Object.entries(bets)){const r=ruleOf(k);if(r.t(n)){win+=v*(r.m+1);cells[k]?.classList.add('hit')}}
-  const staked=total(),net=win-staked;balance+=win;
-  $('badge').textContent=n;$('badge').className='badge '+cc(n);
-  const name=n===0?'緑':cc(n)==='r'?'赤':'黒';
-  setMsg(net>0?`${n}（${name}）— 勝ち！ +${net.toLocaleString()}`:net===0?`${n}（${name}）— 払い戻しで±0`:`${n}（${name}）— ハズレ ${net.toLocaleString()}`,net>0);
+  const net=win-total();balance+=win;
+  $('badge').textContent=lab(n);$('badge').className='badge '+cc(n);zoomShow(n);
+  const name=(n===0||n===37)?'緑':cc(n)==='r'?'赤':'黒';
+  setMsg(net>0?`${lab(n)}(${name}) 勝ち！ +${net.toLocaleString()}`:net===0?`${lab(n)}(${name}) ${total()?'払い戻しで±0':'ベットなし'}`:`${lab(n)}(${name}) ハズレ ${net.toLocaleString()}`,net>0);
+  if(net>0){const b=$('bal');b.classList.remove('flash');void b.offsetWidth;b.classList.add('flash')}
   hist.unshift(n);hist=hist.slice(0,14);
-  $('hist').innerHTML=hist.map(x=>`<span class="${cc(x)}">${x}</span>`).join('');
+  $('hist').innerHTML=hist.map(x=>`<span class="${cc(x)}">${lab(x)}</span>`).join('');
   bets={};stack=[];spinning=false;
-  if(balance<=0){balance=0;setMsg(`${n}（${name}）— 残高がなくなりました。`);
-    const b=document.createElement('button');b.className='act';b.textContent='リセット（1000）';b.onclick=()=>{balance=1000;save();b.remove();setMsg('1000で再スタート。');refresh()};$('msg').appendChild(document.createElement('br'));$('msg').appendChild(b)}
+  if(vs){vs.round++;vs.myReady=false;vs.myNet=net}
+  if(balance<=0&&!vs){balance=0;setMsg(`${lab(n)}(${name}) 残高がなくなりました。`);
+    const b=document.createElement('button');b.className='act';b.textContent='リセット(1000)';b.onclick=()=>{balance=1000;save();b.remove();setMsg('1000で再スタート。');refresh()};
+    $('msg').appendChild(document.createElement('br'));$('msg').appendChild(b)}
   save();refresh();
+  if(vs){vsPanel();checkEnd()}
+}
+ 
+// ---- online / modes ----
+const ROUNDS=10,CODE_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',MENU=$('menu'),MB=$('mbody');
+const mmsg=t=>{const m=$('mmsg');if(m)m.textContent=t};
+let closable=false;
+function showMenu(h,c){MB.innerHTML=h;MENU.hidden=false;closable=!!c}
+function mainMenu(){
+  showMenu(`<p>遊び方を選んでください。</p>
+  <button class="act big" data-a="solo">ソロで遊ぶ</button>
+  <button class="act big" data-a="duo">1台の端末で対戦(2〜4人)</button>
+  <button class="act big" data-a="host">友達とオンライン対戦(2人・部屋を作る)</button>
+  <div class="join"><input id="code" maxlength="5" placeholder="部屋コード" autocomplete="off"><button class="act" data-a="join">参加する</button></div>
+  <button class="act" data-a="close">閉じる</button>
+  <p class="sm">対戦は10ラウンド。同じ出目に賭け、最後に残高がいちばん多い人の勝ちです。</p><p id="mmsg" class="sm"></p>`,true);
+}
+const inGame=()=>(duo&&duo.round>0&&!duo.over)||(vs&&vs.round>0&&!vs.over);
+function duoMenu(){
+  showMenu(`<p>何人で遊びますか？(同じ端末で交代しながら遊びます)</p>
+  <div class="pick"><button class="act big" data-a="duoN" data-n="2">2人</button><button class="act big" data-a="duoN" data-n="3">3人</button><button class="act big" data-a="duoN" data-n="4">4人</button></div>
+  <button class="act" data-a="menu">戻る</button>
+  <p class="sm">10ラウンドで、残高がいちばん多い人の勝ちです。</p>`,true);
+}
+MENU.onclick=e=>{if(e.target===MENU&&closable)MENU.hidden=true};
+addEventListener('keydown',e=>{if(e.key==='Escape'&&closable&&!MENU.hidden)MENU.hidden=true});
+MB.onclick=e=>{
+  const el=e.target.closest('[data-a]');if(!el)return;const a=el.dataset.a;
+  if(['solo','duoN','host','join'].includes(a)&&inGame()&&!confirm('今のゲームを終了して切り替えますか？'))return;
+  if(a==='solo')toSolo();
+  else if(a==='duo')duoMenu();
+  else if(a==='duoN'){duoInit(+el.dataset.n);MENU.hidden=true}
+  else if(a==='menu')mainMenu();
+  else if(a==='close')MENU.hidden=true;
+  else if(a==='ok')MENU.hidden=true;
+  else if(a==='host')host();
+  else if(a==='join'){const c=$('code').value.trim().toUpperCase();if(c.length<4){mmsg('コードを入力してください。');return}join(c)}
+  else if(a==='cancel'){closeNet();mainMenu()}
+  else if(a==='copy'){try{navigator.clipboard.writeText(el.dataset.u);el.textContent='コピーしました'}catch(x){}}
+};
+$('modeBtn').onclick=mainMenu;
+function closeNet(){const c=conn,p=peer;conn=peer=null;try{c&&c.close()}catch(e){}try{p&&p.destroy()}catch(e){}}
+function toSolo(){
+  if(mode!=='solo'){
+    closeNet();mode='solo';vs=null;duo=null;$('vs').hidden=true;
+    if(anim){anim=null;resultIdx=0}
+    try{balance=+localStorage.getItem('roulette-balance')||1000}catch(e){balance=1000}
+    bets={};stack=[];spinning=false;hist=[];$('hist').innerHTML='';
+    setMsg('チップを選んで、盤面をタップしてベットしてください。');refresh();
+  }else closeNet();
+  try{history.replaceState(null,'',location.pathname)}catch(e){}
+  MENU.hidden=true;
+}
+function vsInit(){
+  duo=null;
+  if(mode==='solo'){balance+=total();save()}
+  mode='vs';balance=1000;bets={};stack=[];last=null;spinning=false;hist=[];$('hist').innerHTML='';
+  vs={round:0,oppBal:1000,oppRound:0,oppTot:0,oppReady:false,oppNet:null,oppAgain:false,myReady:false,myNet:null,again:false,over:false};
+  $('vs').hidden=false;$('again').hidden=true;$('again').disabled=false;refresh();
+}
+function host(){
+  closeNet();isHost=true;
+  const code=Array.from({length:5},()=>CODE_CHARS[Math.random()*32|0]).join('');
+  showMenu('<p>部屋を作っています…</p><p id="mmsg" class="sm"></p>');
+  if(typeof Peer==='undefined'){mmsg('対戦機能を読み込めませんでした。ネット接続を確認してください。');return}
+  peer=new Peer('rlt-'+code);
+  peer.on('open',()=>{const u=location.origin+location.pathname+'?room='+code;
+    showMenu(`<p>友達にこのコードを伝えてください。</p><div class="code">${code}</div><p class="sm">リンクを送ってもOKです:<br>${u}</p><button class="act" data-a="copy" data-u="${u}">リンクをコピー</button> <button class="act" data-a="cancel">キャンセル</button><p class="sm">友達が入ると自動で始まります。</p><p id="mmsg" class="sm"></p>`)});
+  peer.on('connection',c=>{if(conn){c.close();return}conn=c;bind()});
+  peer.on('error',e=>{if(e.type==='unavailable-id')host();else mmsg('接続エラー: '+e.type)});
+}
+function join(code){
+  closeNet();isHost=false;
+  showMenu(`<p>部屋 ${code} に接続中…</p><button class="act" data-a="cancel">キャンセル</button><p id="mmsg" class="sm"></p>`);
+  if(typeof Peer==='undefined'){mmsg('対戦機能を読み込めませんでした。ネット接続を確認してください。');return}
+  peer=new Peer();
+  peer.on('open',()=>{conn=peer.connect('rlt-'+code,{reliable:true});bind()});
+  peer.on('error',e=>mmsg(e.type==='peer-unavailable'?'その部屋が見つかりません。コードを確認してください。':'接続エラー: '+e.type));
+}
+function bind(){
+  const c=conn;
+  c.on('open',()=>{vsInit();MENU.hidden=true;setMsg('対戦開始！ベットして「準備OK」を押してください。')});
+  c.on('data',onData);
+  c.on('close',()=>{if(conn!==c)return;if(mode==='vs'){spinning=true;$('again').hidden=true;setMsg('相手との接続が切れました。「モード」から選び直してください。');refresh()}else mmsg('接続が切れました。')});
+  c.on('error',()=>{});
+}
+function sendSt(){
+  if(!vs||!conn||!conn.open)return;
+  try{conn.send({t:'st',tot:total(),ready:vs.myReady,worth:balance+total(),round:vs.round,net:vs.myNet,again:vs.again})}catch(e){}
+}
+function onData(m){
+  if(!vs||!m)return;
+  if(m.t==='st'){
+    vs.oppTot=m.tot;vs.oppReady=m.ready;vs.oppBal=m.worth;vs.oppRound=m.round;vs.oppNet=m.net;vs.oppAgain=!!m.again;
+    if(vs.again&&vs.oppAgain){vsInit();return}
+    vsPanel();checkEnd();if(isHost)tryStart();
+  }else if(m.t==='spin')startSpin(m.n,m.a);
+}
+function tryStart(){
+  if(!vs||anim||!vs.myReady||!vs.oppReady||vs.oppRound!==vs.round)return;
+  const n=rand38(),a=[Math.random()];
+  try{conn.send({t:'spin',n,a})}catch(e){return}
+  startSpin(n,a);
+}
+function vsPanel(){
+  if(!vs)return;
+  const st=vs.oppReady&&vs.oppRound===vs.round?'準備OK':`ベット中(${vs.oppTot})`;
+  const sg=x=>x==null?'':` 前回 ${x>0?'+':''}${x}`;
+  $('vsi').innerHTML=`<span>ラウンド<b>${Math.min(vs.round+1,ROUNDS)}/${ROUNDS}</b></span><span>あなた<b>${(balance+total()).toLocaleString()}</b><small>${sg(vs.myNet)}</small></span><span>相手<b>${vs.oppBal.toLocaleString()}</b><small>${st}${sg(vs.oppNet)}</small></span>`;
+}
+function checkEnd(){
+  if(!vs||vs.over||vs.round<ROUNDS||vs.oppRound<ROUNDS)return;
+  vs.over=true;const d=balance-vs.oppBal;
+  setMsg(d>0?`対戦終了！あなたの勝ちです(${balance} 対 ${vs.oppBal})`:d<0?`対戦終了。相手の勝ちです(${balance} 対 ${vs.oppBal})`:`対戦終了！引き分けです(${balance})`,d>0);
+  spinning=true;$('again').hidden=false;refresh();
+}
+$('again').onclick=()=>{if(duo){duoInit(duo.n);return}if(!vs)return;vs.again=true;$('again').disabled=true;refresh();if(vs&&vs.again&&vs.oppAgain)vsInit()};
+// ---- 1台で2人対戦 ----
+function duoInit(n){
+  n=n||2;closeNet();vs=null;if(anim){anim=null;resultIdx=0}
+  if(mode==='solo'){balance+=total();save()}
+  mode='duo';duo={n,round:0,cur:0,bal:Array(n).fill(1000),bets:Array.from({length:n},()=>({})),net:Array(n).fill(null)};
+  balance=1000;bets={};stack=[];last=null;spinning=false;hist=[];$('hist').innerHTML='';
+  $('vs').hidden=false;$('again').hidden=true;
+  setMsg('プレイヤー1の番です。ベットして「プレイヤー2へ」を押してください。');refresh();
+}
+function duoPanel(){
+  const sum=b=>Object.values(b).reduce((a,c)=>a+c,0);
+  const w=i=>i===duo.cur?balance+total():duo.bal[i]+sum(duo.bets[i]);
+  const sg=x=>x==null?'':` 前回 ${x>0?'+':''}${x}`;
+  $('vsi').innerHTML=`<span>ラウンド<b>${Math.min(duo.round+1,ROUNDS)}/${ROUNDS}</b></span>`+
+    duo.bets.map((_,i)=>`<span${i===duo.cur&&!duo.over?' class="cur"':''}>プレイヤー${i+1}<b>${w(i).toLocaleString()}</b><small>${duo.over?'':i===duo.cur?'ベット中':i<duo.cur?'ベット済み':''}${sg(duo.net[i])}</small></span>`).join('');
+}
+function settleHot(n){
+  const ids=Array.from({length:duo.n},(_,i)=>i);
+  const net=ids.map(i=>{
+    let win=0;
+    for(const[k,v]of Object.entries(duo.bets[i])){const r=ruleOf(k);if(r.t(n)){win+=v*(r.m+1);cells[k]?.classList.add('hit')}}
+    const st=Object.values(duo.bets[i]).reduce((a,c)=>a+c,0);duo.bal[i]+=win;return win-st;
+  });
+  duo.net=net;duo.round++;duo.bets=ids.map(()=>({}));
+  $('badge').textContent=lab(n);$('badge').className='badge '+cc(n);zoomShow(n);
+  const name=(n===0||n===37)?'緑':cc(n)==='r'?'赤':'黒',f=x=>(x>0?'+':'')+x;
+  setMsg(`${lab(n)}(${name}) `+net.map((x,i)=>`P${i+1} ${f(x)}`).join(' / '),net.some(x=>x>0));
+  hist.unshift(n);hist=hist.slice(0,14);
+  $('hist').innerHTML=hist.map(x=>`<span class="${cc(x)}">${lab(x)}</span>`).join('');
+  duo.cur=0;balance=duo.bal[0];bets={};stack=[];spinning=false;
+  if(duo.round>=ROUNDS){
+    duo.over=true;
+    const rank=ids.slice().sort((a,b)=>duo.bal[b]-duo.bal[a]),top=duo.bal[rank[0]],ws=rank.filter(i=>duo.bal[i]===top).map(i=>'プレイヤー'+(i+1));
+    setMsg(`対戦終了！${ws.length>1?ws.join('・')+'が同点で1位':ws[0]+'の勝ち'} `+rank.map((i,r)=>`${r+1}位 P${i+1}:${duo.bal[i]}`).join(' / '),true);
+    spinning=true;$('again').hidden=false;
+  }
+  refresh();
 }
 refresh();
+{const q=new URLSearchParams(location.search).get('room');if(q)join(q.toUpperCase());else mainMenu()}
 </script>
 </body>
 </html>
+ 
+Claudeが応答を完了しました
