@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Roulette – ヨーロピアンルーレット</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Limelight&family=Hanken+Grotesk:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--felt:#0e4636;--felt-d:#093025;--brass:#cba24b;--ivory:#f3ecd6;--red:#a82a30;--black:#17130f;--green:#1f7a4f;--ink:#f3ecd6;--mute:#a9b8ac}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:radial-gradient(ellipse at 30% 0%,var(--felt) 0%,var(--felt-d) 70%) fixed;color:var(--ink);font-family:"Hanken Grotesk","Hiragino Sans","Yu Gothic",sans-serif;min-height:100vh}
+header{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:18px 24px;border-bottom:1px solid rgba(203,162,75,.4)}
+h1{font-family:Limelight,serif;font-weight:400;font-size:2rem;margin:0;color:var(--brass);letter-spacing:.04em}
+.bank{display:flex;gap:20px;align-items:baseline}
+.bank b{font-size:1.5rem;font-variant-numeric:tabular-nums}
+.bank small{color:var(--mute)}
+main{display:grid;grid-template-columns:minmax(300px,520px) 1fr;gap:28px;padding:24px;max-width:1280px;margin:0 auto}
+@media(max-width:960px){main{grid-template-columns:1fr;padding:16px}}
+.left{display:flex;flex-direction:column;align-items:center;gap:14px}
+canvas{width:100%;max-width:520px;aspect-ratio:1;display:block}
+.result{display:flex;align-items:center;gap:14px;min-height:64px;width:100%;max-width:520px}
+.badge{width:60px;height:60px;border-radius:50%;display:grid;place-items:center;font-family:Limelight,serif;font-size:1.7rem;border:3px solid var(--brass);flex:none;background:var(--felt-d)}
+.badge.r{background:var(--red)}.badge.b{background:var(--black)}.badge.g{background:var(--green)}
+#msg{font-size:1.05rem;line-height:1.4}
+#msg.win{color:#ffd978}
+.hist{display:flex;gap:6px;flex-wrap:wrap;width:100%;max-width:520px;min-height:30px}
+.hist span{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:.8rem;font-weight:600;border:1px solid rgba(243,236,214,.5)}
+.hist .r,.cell.r{background:var(--red)}.hist .b,.cell.b{background:var(--black)}.hist .g,.cell.g{background:var(--green)}
+.right{min-width:0}
+.tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+.chips{display:flex;gap:8px}
+.chipbtn{width:52px;height:52px;border-radius:50%;border:3px dashed var(--ivory);background:var(--c);color:#fff;font:800 .85rem "Hanken Grotesk",sans-serif;cursor:pointer;box-shadow:0 0 0 3px var(--c)}
+.chipbtn[aria-pressed=true]{outline:3px solid var(--brass);outline-offset:4px}
+button.act{background:transparent;color:var(--ink);border:1px solid var(--brass);border-radius:6px;padding:10px 16px;font:600 .95rem "Hanken Grotesk","Hiragino Sans",sans-serif;cursor:pointer}
+button.act:hover:not(:disabled){background:rgba(203,162,75,.18)}
+button.act:disabled{opacity:.4;cursor:not-allowed}
+button.spin{background:var(--brass);color:#1a1209;border-color:var(--brass);font-weight:800;padding:12px 28px;margin-left:auto}
+button.spin:hover:not(:disabled){background:#e0b95f}
+:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.scroll{overflow-x:auto;padding-bottom:8px}
+.board{display:grid;grid-template-columns:54px repeat(12,minmax(44px,1fr)) 54px;grid-auto-rows:52px;gap:3px;min-width:680px}
+.cell{position:relative;display:grid;place-items:center;border:1px solid rgba(243,236,214,.55);background:transparent;color:var(--ink);font:600 1rem "Hanken Grotesk","Hiragino Sans",sans-serif;cursor:pointer;padding:0;border-radius:3px;user-select:none}
+.cell:hover:not(:disabled){filter:brightness(1.35);border-color:var(--brass)}
+.cell:disabled{cursor:not-allowed}
+.cell.hit{box-shadow:0 0 0 3px var(--brass),0 0 18px var(--brass);z-index:2}
+.cell.out{font-size:.92rem}
+.stake{position:absolute;min-width:30px;height:30px;padding:0 4px;border-radius:15px;background:var(--ivory);color:#1a1209;border:3px dashed #8a6a1f;font:800 .75rem "Hanken Grotesk",sans-serif;display:grid;place-items:center;pointer-events:none;box-shadow:0 2px 4px rgba(0,0,0,.5)}
+.help{color:var(--mute);font-size:.85rem;margin-top:12px;line-height:1.6}
+</style>
+</head>
+<body>
+<header>
+  <h1>Roulette</h1>
+  <div class="bank"><span><small>残高</small> <b id="bal">1000</b></span><span><small>ベット合計</small> <b id="tot">0</b></span></div>
+</header>
+<main>
+  <section class="left">
+    <canvas id="wheel" width="1040" height="1040" aria-label="ルーレットホイール"></canvas>
+    <div class="result"><div class="badge" id="badge">–</div><div id="msg" aria-live="polite">チップを選んで、盤面をタップしてベットしてください。</div></div>
+    <div class="hist" id="hist"></div>
+  </section>
+  <section class="right">
+    <div class="tools">
+      <div class="chips" id="chips"></div>
+      <button class="act" id="undo">1つ戻す</button>
+      <button class="act" id="clear">全部クリア</button>
+      <button class="act spin" id="spin" disabled>スピン</button>
+    </div>
+    <div class="scroll"><div class="board" id="board"></div></div>
+    <p class="help">ヨーロピアン方式（0 が1つ、全37ポケット）。ストレート（1点）は35倍、ダース・コラムは3倍、赤黒・偶奇・前半後半は2倍で払い戻されます。PC ではセルを右クリックで、選択中のチップ分だけ減らせます。遊びのためのゲームで、実際のお金は使いません。</p>
+  </section>
+</main>
+<script>
+const ORDER=[0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
+const REDS=new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
+const cc=n=>n===0?'g':REDS.has(n)?'r':'b';
+const COLORS={g:'#1f7a4f',r:'#a82a30',b:'#17130f'};
+const RULES={
+  red:{l:'赤',t:n=>REDS.has(n),m:1},black:{l:'黒',t:n=>n>0&&!REDS.has(n),m:1},
+  odd:{l:'奇数',t:n=>n>0&&n%2===1,m:1},even:{l:'偶数',t:n=>n>0&&n%2===0,m:1},
+  low:{l:'1–18',t:n=>n>=1&&n<=18,m:1},high:{l:'19–36',t:n=>n>=19,m:1},
+  d1:{l:'1st 12',t:n=>n>=1&&n<=12,m:2},d2:{l:'2nd 12',t:n=>n>=13&&n<=24,m:2},d3:{l:'3rd 12',t:n=>n>=25,m:2},
+  c1:{l:'2:1',t:n=>n>0&&n%3===1,m:2},c2:{l:'2:1',t:n=>n>0&&n%3===2,m:2},c3:{l:'2:1',t:n=>n>0&&n%3===0,m:2}
+};
+const ruleOf=k=>k.startsWith('n:')?{t:n=>n===+k.slice(2),m:35}:RULES[k];
+const CHIPS=[[10,'#2f5d9e'],[50,'#7a3b8f'],[100,'#1a1a1a'],[500,'#b0561f']];
+const $=id=>document.getElementById(id);
+let balance=1000,chip=10,bets={},stack=[],spinning=false,resultIdx=null,hist=[];
+try{const s=+localStorage.getItem('roulette-balance');if(s>0)balance=s}catch(e){}
+function save(){try{localStorage.setItem('roulette-balance',balance)}catch(e){}}
+const total=()=>Object.values(bets).reduce((a,b)=>a+b,0);
+
+// ---- board ----
+const board=$('board'),cells={};
+function mk(key,label,cls,col,row){
+  const b=document.createElement('button');b.className='cell '+cls;b.textContent=label;b.style.gridColumn=col;b.style.gridRow=row;b.dataset.key=key;
+  b.addEventListener('click',()=>place(key));
+  b.addEventListener('contextmenu',e=>{e.preventDefault();remove(key)});
+  board.appendChild(b);cells[key]=b;
+}
+mk('n:0','0','g','1','1 / 4');
+for(let n=1;n<=36;n++)mk('n:'+n,n,cc(n),String(Math.ceil(n/3)+1),String(n%3===0?1:n%3===2?2:3));
+mk('c3','2:1','out','14','1');mk('c2','2:1','out','14','2');mk('c1','2:1','out','14','3');
+[['d1','2 / 6'],['d2','6 / 10'],['d3','10 / 14']].forEach(([k,c])=>mk(k,RULES[k].l,'out',c,'4'));
+[['low','2 / 4','out'],['even','4 / 6','out'],['red','6 / 8','out r'],['black','8 / 10','out b'],['odd','10 / 12','out'],['high','12 / 14','out']]
+  .forEach(([k,c,cl])=>mk(k,RULES[k].l,cl,c,'5'));
+CHIPS.forEach(([v,c])=>{const b=document.createElement('button');b.className='chipbtn';b.style.setProperty('--c',c);b.textContent=v;b.setAttribute('aria-pressed',v===chip);b.setAttribute('aria-label',v+'のチップ');
+  b.onclick=()=>{chip=v;[...$('chips').children].forEach(x=>x.setAttribute('aria-pressed',x===b))};$('chips').appendChild(b)});
+
+function refresh(){
+  $('bal').textContent=balance.toLocaleString();$('tot').textContent=total().toLocaleString();
+  Object.entries(cells).forEach(([k,el])=>{
+    el.querySelector('.stake')?.remove();el.disabled=spinning;
+    if(bets[k]){const s=document.createElement('span');s.className='stake';s.textContent=bets[k];el.appendChild(s)}
+  });
+  $('spin').disabled=spinning||total()===0;$('undo').disabled=spinning||!stack.length;$('clear').disabled=spinning||!total();
+}
+function place(k){
+  if(spinning)return;
+  if(balance<chip){setMsg(balance<=0?'残高がありません。「リセット」で1000に戻せます。':'残高が足りません。小さいチップを選んでください。');return}
+  balance-=chip;bets[k]=(bets[k]||0)+chip;stack.push([k,chip]);save();refresh();
+}
+function remove(k){
+  if(spinning||!bets[k])return;
+  const v=Math.min(chip,bets[k]);bets[k]-=v;if(!bets[k])delete bets[k];balance+=v;stack=stack.filter(()=>true);
+  for(let i=stack.length-1,left=v;i>=0&&left>0;i--){if(stack[i][0]===k){const d=Math.min(left,stack[i][1]);stack[i][1]-=d;left-=d;if(!stack[i][1])stack.splice(i,1)}}
+  save();refresh();
+}
+$('undo').onclick=()=>{if(spinning||!stack.length)return;const[k,v]=stack.pop();bets[k]-=v;if(!bets[k])delete bets[k];balance+=v;save();refresh()};
+$('clear').onclick=()=>{if(spinning)return;balance+=total();bets={};stack=[];save();refresh()};
+function setMsg(t,win){$('msg').textContent=t;$('msg').className=win?'win':''}
+
+// ---- wheel ----
+const cv=$('wheel'),g=cv.getContext('2d'),S=cv.width,C=S/2,K=S/520;
+const STEP=Math.PI*2/37,pocketAngle=i=>i*STEP-Math.PI/2;
+let wa=0,ba=0,br=216;
+function wheelDraw(){
+  g.setTransform(K,0,0,K,0,0);g.clearRect(0,0,520,520);g.save();g.translate(260,260);
+  let gr=g.createRadialGradient(0,0,200,0,0,258);gr.addColorStop(0,'#5a3a1e');gr.addColorStop(.7,'#3b2412');gr.addColorStop(1,'#241508');
+  g.fillStyle=gr;g.beginPath();g.arc(0,0,258,0,7);g.fill();
+  g.strokeStyle='#cba24b';g.lineWidth=3;g.beginPath();g.arc(0,0,252,0,7);g.stroke();
+  gr=g.createRadialGradient(0,0,196,0,0,238);gr.addColorStop(0,'#2a2018');gr.addColorStop(1,'#4a3c2c');
+  g.fillStyle=gr;g.beginPath();g.arc(0,0,238,0,7);g.fill();
+  g.save();g.rotate(wa);
+  ORDER.forEach((n,i)=>{
+    const a=pocketAngle(i),h=STEP/2;
+    g.beginPath();g.arc(0,0,198,a-h,a+h);g.arc(0,0,148,a+h,a-h,true);g.closePath();
+    g.fillStyle=COLORS[cc(n)];g.fill();g.strokeStyle='#cba24b';g.lineWidth=1.5;g.stroke();
+    g.save();g.rotate(a);g.translate(184,0);g.rotate(Math.PI/2);
+    g.fillStyle='#f3ecd6';g.font='600 13px "Hanken Grotesk",sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(n,0,0);g.restore();
+  });
+  gr=g.createRadialGradient(-20,-20,5,0,0,148);gr.addColorStop(0,'#e7cd86');gr.addColorStop(1,'#8a6a1f');
+  g.fillStyle=gr;g.beginPath();g.arc(0,0,146,0,7);g.fill();
+  g.strokeStyle='rgba(60,40,10,.55)';g.lineWidth=5;
+  for(let i=0;i<4;i++){g.save();g.rotate(i*Math.PI/2+Math.PI/4);g.beginPath();g.moveTo(34,0);g.lineTo(138,0);g.stroke();g.restore()}
+  g.fillStyle='#2a1a0a';g.beginPath();g.arc(0,0,30,0,7);g.fill();g.fillStyle='#cba24b';g.beginPath();g.arc(0,0,16,0,7);g.fill();
+  g.restore();
+  g.fillStyle='#fff';g.shadowColor='rgba(0,0,0,.6)';g.shadowBlur=5;g.shadowOffsetY=2;
+  g.beginPath();g.arc(Math.cos(ba)*br,Math.sin(ba)*br,7.5,0,7);g.fill();
+  g.restore();
+}
+const ease3=p=>1-Math.pow(1-p,3),ease2=p=>1-(1-p)*(1-p),eio=p=>p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let anim=null;
+function frame(t){
+  if(anim){
+    const p=Math.min(1,(t-anim.t0)/anim.T);
+    wa=anim.W0+(anim.W1-anim.W0)*ease2(p);
+    ba=anim.B0+(anim.B1-anim.B0)*ease3(p);
+    br=p<.7?216:216-40*eio((p-.7)/.3)+Math.sin(p*70)*4*Math.pow(1-p,2);
+    if(p>=1){const done=anim.done;anim=null;br=176;done()}
+  }else{
+    if(!reduce)wa+=.0018;
+    if(resultIdx!==null){ba=wa+pocketAngle(resultIdx);br=176}
+  }
+  wheelDraw();requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+function rand37(){const a=new Uint32Array(1);let x;do{crypto.getRandomValues(a);x=a[0]}while(x>=4294967296-4294967296%37);return x%37}
+
+$('spin').onclick=()=>{
+  if(spinning||!total())return;
+  spinning=true;refresh();setMsg('ボールが回っています…');
+  Object.values(cells).forEach(c=>c.classList.remove('hit'));
+  const n=rand37(),idx=ORDER.indexOf(n);
+  const W0=wa,W1=wa+Math.PI*2*(3+Math.random()*1.5),B0=resultIdx!==null?wa+pocketAngle(resultIdx):ba;
+  let B1=W1+pocketAngle(idx);while(B1>B0-Math.PI*2*7)B1-=Math.PI*2;
+  resultIdx=null;br=216;
+  anim={t0:performance.now(),T:reduce?800:6500,W0,W1,B0,B1,done:()=>{resultIdx=idx;settle(n)}};
+};
+function settle(n){
+  let win=0;for(const[k,v]of Object.entries(bets)){const r=ruleOf(k);if(r.t(n)){win+=v*(r.m+1);cells[k]?.classList.add('hit')}}
+  const staked=total(),net=win-staked;balance+=win;
+  $('badge').textContent=n;$('badge').className='badge '+cc(n);
+  const name=n===0?'緑':cc(n)==='r'?'赤':'黒';
+  setMsg(net>0?`${n}（${name}）— 勝ち！ +${net.toLocaleString()}`:net===0?`${n}（${name}）— 払い戻しで±0`:`${n}（${name}）— ハズレ ${net.toLocaleString()}`,net>0);
+  hist.unshift(n);hist=hist.slice(0,14);
+  $('hist').innerHTML=hist.map(x=>`<span class="${cc(x)}">${x}</span>`).join('');
+  bets={};stack=[];spinning=false;
+  if(balance<=0){balance=0;setMsg(`${n}（${name}）— 残高がなくなりました。`);
+    const b=document.createElement('button');b.className='act';b.textContent='リセット（1000）';b.onclick=()=>{balance=1000;save();b.remove();setMsg('1000で再スタート。');refresh()};$('msg').appendChild(document.createElement('br'));$('msg').appendChild(b)}
+  save();refresh();
+}
+refresh();
+</script>
+</body>
+</html>
